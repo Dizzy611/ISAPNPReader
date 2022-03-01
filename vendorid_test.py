@@ -37,4 +37,4 @@ def format_vendorid(vid):
 
 # Resulting short name should be BOX0001    
 myshnm, vendor, product, revision = format_vendorid(167247873)
-print("Vendor: " + vendor, "Product Number: " + product, "Revision: " + revision, "Short Name: " + myshnm)
+print("Vendor: " + vendor + ",", "Product Number: " + product + ",", "Revision: " + revision + ",", "Short Name: " + myshnm)
