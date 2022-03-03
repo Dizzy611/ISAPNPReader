@@ -34,7 +34,20 @@ def format_vendorid(vid):
     # Return a tuple 
     return (shortname, vendorname, productnum, revisionnum)
     
+def read_tag(tagbyte):
+    binary = format(tagbyte, "08b")
+    if int(binary[0]) == 0:          # Short tag
+        tag = int(binary[1:5], 2)    # Tag name
+        length = int(binary[5:8], 2) # Tag length
+        tag_type = 1                 # Short tag type
+    else:                            # Long tag 
+        tag = int(binary[1:8], 2)    # Tag name
+        length = -1                  # Length is on the next two bytes
+        tag_type = 2                 # Long tag type
+        
+    print("TAG_TYPE: ", tag_type, "TAG: ", tag, "LENGTH :", length)
 
 # Resulting short name should be BOX0001    
 myshnm, vendor, product, revision = format_vendorid(167247873)
 print("Vendor: " + vendor + ",", "Product Number: " + product + ",", "Revision: " + revision + ",", "Short Name: " + myshnm)
+read_tag(0x82)
