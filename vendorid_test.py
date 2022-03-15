@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-def format_vendorid(vid):
+def format_id(vid):
     binary = format(vid, "032b")
     if int(binary[0]) != 0:
-        print("ERROR: Invalid Vendor ID")
+        print("ERROR: Invalid ID")
         return None
     shortname = ""
     vendorname = ""
@@ -47,7 +47,46 @@ def read_tag(tagbyte):
         
     print("TAG_TYPE: ", tag_type, "TAG: ", tag, "LENGTH :", length)
 
+def tag_pnp_version(input_bytes):
+    bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal 
+    pretty_version = bcd[0] + "." + bcd[1] # Create version string as major.minor 
+    print("PnP Specification Version: " + pretty_version)
+    pass
+    
+def tag_logical_id(input_bytes):
+    shnm, _, _, _ = format_id(input_bytes)
+    print("Logical Id: " + shnm)
+    
+def tag_compatible_id(input_bytes):
+    shnm, _, _, _ = format_id(input_bytes)
+    print("Compatible Id: " + shnm)
+        
+def tag_irq(input_bytes): # TODO: Turn bitmasks into lists of supported IRQs, description of triggering type 
+    binary_lowirq = format(input_bytes[0], "08b")
+    binary_highirq = format(input_bytes[1], "08b")
+    binary_irqinfo = format(input_bytes[2], "08b")
+    print("IRQs 7 through 0: " + binary_lowirq)
+    print("IRQs 15 through 8: " + binary_highirq)
+    print("IRQ level/edge sensitive, high/low mask: " + binary_irqinfo)
+    pass
+    
+def tag_dma(input_bytes):
+    pass
+    
+def tag_dependent_function(input_bytes);
+    pass
+    
+def tag_io(input_bytes):
+    pass
+    
+def tag_fixed_io(input_bytes);
+    pass
+    
+def tag_vendor(input_bytes):
+    pass
+    
+    
 # Resulting short name should be BOX0001    
-myshnm, vendor, product, revision = format_vendorid(167247873)
+myshnm, vendor, product, revision = format_id(167247873)
 print("Vendor: " + vendor + ",", "Product Number: " + product + ",", "Revision: " + revision + ",", "Short Name: " + myshnm)
 read_tag(0x82)
