@@ -65,28 +65,44 @@ def tag_irq(input_bytes): # TODO: Turn bitmasks into lists of supported IRQs, de
     binary_lowirq = format(input_bytes[0], "08b")
     binary_highirq = format(input_bytes[1], "08b")
     binary_irqinfo = format(input_bytes[2], "08b")
-    print("IRQs 7 through 0: " + binary_lowirq)
-    print("IRQs 15 through 8: " + binary_highirq)
+    irqlist = []
+    for i in range(0, 7):
+        if binary_lowirq[i] == "1":
+            irqlist.append(7-i)
+    for i in range(0, 7):
+        if binary_highirq[i] == "1":
+            irqlist.append(15-i)
+    irqlist.sort()
+    outstr = ""
+    for irq in irqlist:
+        outstr += str(irq) + " "
+    print("Acceptable IRQs: " + outstr)
     print("IRQ level/edge sensitive, high/low mask: " + binary_irqinfo)
     pass
     
 def tag_dma(input_bytes):
     pass
     
-def tag_dependent_function(input_bytes);
+def tag_dependent_function(input_bytes):
     pass
     
 def tag_io(input_bytes):
     pass
     
-def tag_fixed_io(input_bytes);
+def tag_fixed_io(input_bytes):
     pass
     
 def tag_vendor(input_bytes):
     pass
     
     
+# Various tests on different functions
+
 # Resulting short name should be BOX0001    
 myshnm, vendor, product, revision = format_id(167247873)
 print("Vendor: " + vendor + ",", "Product Number: " + product + ",", "Revision: " + revision + ",", "Short Name: " + myshnm)
+# Identifier string, long tag  
 read_tag(0x82)
+# IRQ short tag data test
+tag_irq(bytes.fromhex('A00200'))
+
