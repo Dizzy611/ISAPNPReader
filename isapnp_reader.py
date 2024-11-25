@@ -50,6 +50,13 @@ def read_tag(tagbyte):
         tag_type = 2                 # Long tag type
     return tag_type, tag, length
 
+def tag_ansistr(input_bytes):
+    return input_bytes.decode('ascii')
+
+def tag_unistr(input_bytes):
+    # IS this utf-8? It just says "unicode" and I can't find a single example explaining what kind of unicode or for that matter ever showing a device using it.
+    return input_bytes.decode('utf-8')
+
 def tag_pnp_version(input_bytes):
     bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal 
     pretty_version = bcd[0] + "." + bcd[1] # Create version string as major.minor 
@@ -120,6 +127,10 @@ if __name__ == "__main__":
                 length = int.from_bytes(rom_bytes[cursor:cursor+1], "little")
                 print("Encountered long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 # process tag here
+                if (tag_name == "ansistr"):
+                    print("ANSI String: " + tag_ansistr(rom_bytes[cursor+2:cursor+2+length+1]))
+                elif (tag_name == "unistr"):
+                    print("Unicode String: " + tag_unistr(rom_bytes[cursor+2:cursor+2+length+1]))
                 cursor += length+2
             else:
                 print("ERROR: Encountered unknown tag type.")
