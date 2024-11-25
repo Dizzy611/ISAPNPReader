@@ -144,12 +144,20 @@ def tag_io(input_bytes):
     else:
         return bool(int(binary_iotype[7])), min_address, max_address, alignment, num_ports
 
-
 def tag_fixed_io(input_bytes):
-    pass
+    address = format(int.from_bytes(input_bytes[0:2], "little"), "x")
+    num_ports = int(input_bytes[2])
+    return address, num_ports
 
 def tag_vendor(input_bytes):
-    pass
+    hex_vendor = format(int.from_bytes(input_bytes, "little"), "x")
+    try:
+    	ascii_vendor = input_bytes.decode("ascii")
+    except:
+        ascii_vendor = "Invalid ASCII"
+    return hex_vendor, ascii_vendor
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
@@ -215,6 +223,9 @@ if __name__ == "__main__":
                     else:
                         iotypestr = "8-bit decoding"
                     print("I/O (" + iotypestr + ") Port Min: 0x" + min + ", Max: 0x" + max + ", Alignment: " + str(alignment) + ", Ports Requested: " + str(portnum))
+                elif (tag_name == "fixedio"):
+                    address, portnum = tag_fixed_io(rom_bytes[cursor:cursor+length])
+                    print("Fixed I/O Port: 0x" + address + ", Ports Requested: " + str(portnum))
                 elif (tag_name == "configstart"):
                     config_type = tag_configstart(rom_bytes[cursor:cursor+length])
                     print("Dependent function: Configuration type '" + config_type + "'")
@@ -226,6 +237,9 @@ if __name__ == "__main__":
                 elif (tag_name == "compatid"):
                     shortname = tag_id(rom_bytes[cursor:cursor+length])
                     print("Compatible ID: " + shortname)
+                elif (tag_name == "vendorshort"):
+                    hex, ascii = tag_vendor(rom_bytes[cursor:cursor+length])
+                    print("Vendor Defined Tag: " + hex + " (ASCII: " + ascii + ")")
                 elif (tag_name == "end"):
                     print("End of PnP ROM, rest of data ignored.")
                     break
