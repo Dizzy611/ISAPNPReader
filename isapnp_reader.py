@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 import sys
+import os
 
 tag_types_short = [ "unknown", "pnpver", "logicalid", "compatid", "irq", "dma", "configstart", "configend", "io", "fixedio", "reserved_a", "reserved_b", "reserved_c", "reserved_d", "vendorshort", "end" ]
 tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32memrange", "fix32memrange" ]
+
+def read_devids():
+    if not os.path.exists("./devids.dat"):
+        devid_dict = {}
+    else:
+        with open("devids.dat", "r") as devid_file:
+            devids = devid_file.readlines()
+        devid_dict = {}
+        for devid in devids:
+            devid_dict[devid.split(':')[0]] = devid.split(':')[1].strip()
+    return devid_dict
 
 def bool_to_yesno(mybool):
     if (mybool == True):
@@ -239,6 +251,7 @@ if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print("ERROR: Must specify a ROM on the command line.")
     else:
+        devids = read_devids()
         with open(sys.argv[1], "rb") as rom_file:
             rom_bytes = rom_file.read()
         header = rom_bytes[0:9]
@@ -307,9 +320,13 @@ if __name__ == "__main__":
                 elif (tag_name == "logicalid"):
                     shortname, boot_participating = tag_logical(rom_bytes[cursor:cursor+length])
                     print("Logical ID: " + shortname + ", Participates in boot: " + bool_to_yesno(boot_participating))
+                    if shortname.upper() in devids:
+                        print("Logical ID maps to " + devids[shortname.upper()])
                 elif (tag_name == "compatid"):
                     shortname = tag_id(rom_bytes[cursor:cursor+length])
                     print("Compatible ID: " + shortname)
+                    if shortname.upper() in devids:
+                        print("Compatible ID maps to " + devids[shortname.upper()])
                 elif (tag_name == "vendorshort"):
                     hex, ascii = tag_vendor(rom_bytes[cursor:cursor+length])
                     print("Vendor Defined Tag (Short): " + hex + " (ASCII: " + ascii + ")")
