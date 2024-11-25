@@ -36,13 +36,19 @@ def format_id(vid):
     # Revision number is a final hex digit compressed into the final 4 bit section of the vendor ID
     revisionnum += format(int(binary[28:32], 2), "x")
 
+    # Required-for-boot flag
+    if (len(binary) > 32): # we have final bytes for the boot flag and optional commands. We don't parse the optional commands, but the boot flag may be important
+        boot_participating = bool(int(binary[39]))
+    else:
+        boot_participating = False
+
     # Create the "short version" of the vendor ID by appending these three. For our example, the result should be "BOX0001"
     shortname += vendorname
     shortname += productnum
     shortname += revisionnum
 
     # Return a tuple
-    return (shortname, vendorname, productnum, revisionnum)
+    return (shortname, vendorname, productnum, revisionnum, boot_participating)
 
 def read_tag(tagbyte):
     binary = format(tagbyte, "08b")
@@ -73,16 +79,35 @@ def tag_pnp_version(input_bytes):
     return pretty_version, ven_spec
 
 def tag_id(input_bytes):
-    shnm, _, _, _ = format_id(input_bytes)
+    shnm, _, _, _, _ = format_id(input_bytes)
     return shnm
+
+def tag_logical(input_bytes):
+    shnm, _, _, _, boot_participating = format_id(input_bytes)
+    return shnm, boot_participating
+
+def parse_irqinfo(binary_irqinfo):
+    if int(binary_irqinfo[0:4]) != 0:
+        print("ERROR: Malformed IRQ edge/level trigger mask")
+        return False, False, False, False
+    else:
+        level_low = bool(int(binary_irqinfo[4]))
+        level_high = bool(int(binary_irqinfo[5]))
+        edge_low = bool(int(binary_irqinfo[6]))
+        edge_high = bool(int(binary_irqinfo[7]))
+        return level_low, level_high, edge_low, edge_high
 
 def tag_irq(input_bytes): # TODO: Turn info bitmask into description of triggering type
     binary_lowirq = format(input_bytes[0], "08b")
     binary_highirq = format(input_bytes[1], "08b")
     if len(input_bytes) > 2:
         binary_irqinfo = format(input_bytes[2], "08b")
+        level_low, level_high, edge_low, edge_high = parse_irqinfo(binary_irqinfo)
+        irqinfo_specified = True
     else:
         binary_irqinfo = ""
+        level_low, level_high, edge_low, edge_high = False, False, False, True # Default if not specified is edge-triggered high per ISA spec
+        irqinfo_specified = False
     irqlist = []
     for i in range(0, 7):
         if binary_lowirq[i] == "1":
@@ -91,7 +116,7 @@ def tag_irq(input_bytes): # TODO: Turn info bitmask into description of triggeri
         if binary_highirq[i] == "1":
             irqlist.append(15-i)
     irqlist.sort()
-    return irqlist, binary_irqinfo
+    return irqlist, level_low, level_high, edge_low, edge_high, irqinfo_specified
 
 def tag_configstart(input_bytes):
     if ((len(input_bytes) == 0) or (input_bytes[0] == 1)):
@@ -217,7 +242,7 @@ if __name__ == "__main__":
         with open(sys.argv[1], "rb") as rom_file:
             rom_bytes = rom_file.read()
         header = rom_bytes[0:9]
-        shortname, vendorname, productnum, revisionnum = format_id(header[0:4])
+        shortname, vendorname, productnum, revisionnum, _ = format_id(header[0:4])
         serial = header[4:8]
         checksum = header[8]
         print("Header encountered and parsed, hardware data is as follows:")
@@ -239,15 +264,21 @@ if __name__ == "__main__":
                     else:
                         print("PnP Version: " + version + ", vendor-specific version 0x" + venspec)
                 elif (tag_name == "irq"):
-                    irqlist, binary_irqinfo = tag_irq(rom_bytes[cursor:cursor+length])
+                    irqlist, level_low, level_high, edge_low, edge_high, irqinfo_specified = tag_irq(rom_bytes[cursor:cursor+length])
                     outstr = ""
                     for irq in irqlist:
                         outstr += str(irq) + " "
                     outstr = outstr[:-1]
-                    if (binary_irqinfo != ""):
-                        print("IRQs: " + outstr + ", IRQ edge/level trigger mask: " + binary_irqinfo)
+                    irqinfostr = ""
+                    irqinfostr += "level triggered (low), " if level_low else ""
+                    irqinfostr += "level triggered (high), " if level_high else ""
+                    irqinfostr += "edge triggered (low), " if edge_low else ""
+                    irqinfostr += "edge triggered (high), " if edge_high else ""
+                    irqinfostr = irqinfostr[:-2]
+                    if (irqinfo_specified == True):
+                        print("IRQs: " + outstr + ", IRQ triggers (Specified in tag): " + irqinfostr)
                     else:
-                        print("IRQs: " + outstr)
+                        print("IRQs: " + outstr + ", IRQ triggers (Inferred from ISA spec): " + irqinfostr)
                 elif (tag_name == "dma"):
                     dmalist, speed, count_by_word, count_by_byte, bus_master, type = tag_dma(rom_bytes[cursor:cursor+length])
                     outstr = ""
@@ -274,8 +305,8 @@ if __name__ == "__main__":
                 elif (tag_name == "configend"):
                     print("End dependent functions.")
                 elif (tag_name == "logicalid"):
-                    shortname = tag_id(rom_bytes[cursor:cursor+length])
-                    print("Logical ID: " + shortname)
+                    shortname, boot_participating = tag_logical(rom_bytes[cursor:cursor+length])
+                    print("Logical ID: " + shortname + ", Participates in boot: " + bool_to_yesno(boot_participating))
                 elif (tag_name == "compatid"):
                     shortname = tag_id(rom_bytes[cursor:cursor+length])
                     print("Compatible ID: " + shortname)
