@@ -221,7 +221,7 @@ if __name__ == "__main__":
                     if iotype == True:
                         iotypestr = "16-bit decoding"
                     else:
-                        iotypestr = "8-bit decoding"
+                        iotypestr = "10-bit decoding"
                     print("I/O (" + iotypestr + ") Port Min: 0x" + min + ", Max: 0x" + max + ", Alignment: " + str(alignment) + ", Ports Requested: " + str(portnum))
                 elif (tag_name == "fixedio"):
                     address, portnum = tag_fixed_io(rom_bytes[cursor:cursor+length])
