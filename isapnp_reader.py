@@ -163,15 +163,10 @@ def tag_vendor(input_bytes):
         ascii_vendor = "Invalid ASCII"
     return hex_vendor, ascii_vendor
 
-def tag_memrange(input_bytes):
-    binary_meminfo = format(input_bytes[0], "08b")
-    min_address = format(int.from_bytes(input_bytes[1:3], "little"), "x")
-    max_address = format(int.from_bytes(input_bytes[3:5], "little"), "x")
-    alignment = format(int.from_bytes(input_bytes[5:7], "little"), "x")
-    length = format(int.from_bytes(input_bytes[7:9], "little"), "x")
+def parse_meminfo(binary_meminfo, is_32bit):
     if binary_meminfo[0] != "0":
         print("ERROR: Malformed memory range definition")
-        return False, False, "error", False, False, False, min_address, max_address, alignment, length
+        return False, False, "error", False, False, False
     else:
         expansion_rom = bool(int(binary_meminfo[1]))
         shadowable = bool(int(binary_meminfo[2]))
@@ -181,12 +176,39 @@ def tag_memrange(input_bytes):
             bitsize = "16-bit"
         elif (binary_meminfo[3:5] == "10"):
             bitsize = "8-bit/16-bit"
+        elif (is_32bit):
+            bitsize = "32-bit"
         else:
             bitsize = "reserved (invalid)"
         high_or_range = bool(int(binary_meminfo[5]))
         cacheable = bool(int(binary_meminfo[6]))
         writeable = bool(int(binary_meminfo[7]))
-        return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
+        return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable
+
+def tag_memrange(input_bytes):
+    binary_meminfo = format(input_bytes[0], "08b")
+    min_address = format(int.from_bytes(input_bytes[1:3], "little"), "x")
+    max_address = format(int.from_bytes(input_bytes[3:5], "little"), "x")
+    alignment = format(int.from_bytes(input_bytes[5:7], "little"), "x")
+    length = format(int.from_bytes(input_bytes[7:9], "little"), "x")
+    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, False)
+    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
+
+def tag_32memrange(input_bytes):
+    binary_meminfo = format(input_bytes[0], "08b")
+    min_address = format(int.from_bytes(input_bytes[1:5], "little"), "x")
+    max_address = format(int.from_bytes(input_bytes[5:9], "little"), "x")
+    alignment = format(int.from_bytes(input_bytes[9:13], "little"), "x")
+    length = format(int.from_bytes(input_bytes[13:17], "little"), "x")
+    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, True)
+    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
+
+def tag_fix32memrange(input_bytes):
+    binary_meminfo = format(input_bytes[0], "08b")
+    address = format(int.from_bytes(input_bytes[1:5], "little"), "x")
+    length = format(int.from_bytes(input_bytes[5:9], "little"), "x")
+    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, True)
+    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, length
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
@@ -285,6 +307,24 @@ if __name__ == "__main__":
                     cachestr  = bool_to_yesno(cacheable)
                     writestr  = bool_to_yesno(writeable)
                     print("Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
+                          "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
+                elif (tag_name == "32memrange"):
+                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength = tag_32memrange(rom_bytes[cursor+2:cursor+2+length])
+                    expromstr = bool_to_yesno(expansion_rom)
+                    shadowstr = bool_to_yesno(shadowable)
+                    horstr    = "high address" if high_or_range else "range length"
+                    cachestr  = bool_to_yesno(cacheable)
+                    writestr  = bool_to_yesno(writeable)
+                    print("32-Bit Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
+                          "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
+                elif (tag_name == "fix32memrange"):
+                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, memlength = tag_fix32memrange(rom_bytes[cursor+2:cursor+2+length])
+                    expromstr = bool_to_yesno(expansion_rom)
+                    shadowstr = bool_to_yesno(shadowable)
+                    horstr    = "high address" if high_or_range else "range length"
+                    cachestr  = bool_to_yesno(cacheable)
+                    writestr  = bool_to_yesno(writeable)
+                    print("Fixed 32-Bit Memory Range: Address: 0x" + address + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
                 elif (tag_name == "vendorlong"):
                     hex, ascii = tag_vendor(rom_bytes[cursor+2:cursor+2+length])
