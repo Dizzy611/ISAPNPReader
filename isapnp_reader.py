@@ -60,7 +60,11 @@ def tag_unistr(input_bytes):
 def tag_pnp_version(input_bytes):
     bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal 
     pretty_version = bcd[0] + "." + bcd[1] # Create version string as major.minor 
-    return pretty_version
+    if len(input_bytes) > 1:
+        ven_spec = format(input_bytes[1], "x")
+    else:
+        ven_spec = "none"
+    return pretty_version, ven_spec
 
 def tag_id(input_bytes):
     shnm, _, _, _ = format_id(input_bytes)
@@ -169,7 +173,13 @@ if __name__ == "__main__":
                 else:
                     tag_name = "unknown"
                 # process tag here
-                if (tag_name == "irq"):
+                if (tag_name == "pnpver"):
+                    version, venspec = tag_pnp_version(rom_bytes[cursor:cursor+length])
+                    if venspec == "none":
+                        print("PnP Version: " + version)
+                    else:
+                        print("PnP Version: " + version + ", vendor-specific version 0x" + venspec)
+                elif (tag_name == "irq"):
                     irqlist, binary_irqinfo = tag_irq(rom_bytes[cursor:cursor+length])
                     outstr = ""
                     for irq in irqlist:
