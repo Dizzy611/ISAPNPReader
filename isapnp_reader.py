@@ -23,7 +23,7 @@ def format_id(vid):
     # Compressed ASCII is 5 bits and starts from a 0 of ASCII ordinal 64 (@)
     # The bit positions specified here are from the spec.
     # The following code turns these into normal ASCII and adds them to a string
-    vendorname += chr(64+int(binary[1:6], 2)) 
+    vendorname += chr(64+int(binary[1:6], 2))
     vendorname += chr(64+int(binary[6:11], 2))
     vendorname += chr(64+int(binary[11:16], 2))
 
@@ -41,7 +41,7 @@ def format_id(vid):
     shortname += productnum
     shortname += revisionnum
 
-    # Return a tuple 
+    # Return a tuple
     return (shortname, vendorname, productnum, revisionnum)
 
 def read_tag(tagbyte):
@@ -50,7 +50,7 @@ def read_tag(tagbyte):
         tag = int(binary[1:5], 2)    # Tag name
         length = int(binary[5:8], 2) # Tag length
         tag_type = 1                 # Short tag type
-    else:                            # Long tag 
+    else:                            # Long tag
         tag = int(binary[1:8], 2)    # Tag name
         length = -1                  # Length is on the next two bytes
         tag_type = 2                 # Long tag type
@@ -64,8 +64,8 @@ def tag_unistr(input_bytes):
     return input_bytes.decode('utf-8')
 
 def tag_pnp_version(input_bytes):
-    bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal 
-    pretty_version = bcd[0] + "." + bcd[1] # Create version string as major.minor 
+    bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal
+    pretty_version = bcd[0] + "." + bcd[1] # Create version string as major.minor
     if len(input_bytes) > 1:
         ven_spec = format(input_bytes[1], "x")
     else:
@@ -288,7 +288,7 @@ if __name__ == "__main__":
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
                 elif (tag_name == "vendorlong"):
                     hex, ascii = tag_vendor(rom_bytes[cursor+2:cursor+2+length])
-                    print("Vendor Defined Tag (Long): " + hex + " (ASCII: " + ascii + ")"
+                    print("Vendor Defined Tag (Long): " + hex + " (ASCII: " + ascii + ")")
                 else:
                     print("Encountered unhandled long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 cursor += length+2
