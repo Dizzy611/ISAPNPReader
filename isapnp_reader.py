@@ -66,10 +66,13 @@ def tag_id(input_bytes):
     shnm, _, _, _ = format_id(input_bytes)
     return shnm
 
-def tag_irq(input_bytes): # TODO: Turn bitmasks into lists of supported IRQs, description of triggering type 
+def tag_irq(input_bytes): # TODO: Turn info bitmask into description of triggering type
     binary_lowirq = format(input_bytes[0], "08b")
     binary_highirq = format(input_bytes[1], "08b")
-    binary_irqinfo = format(input_bytes[2], "08b")
+    if len(input_bytes) > 2:
+        binary_irqinfo = format(input_bytes[2], "08b")
+    else:
+        binary_irqinfo = ""
     irqlist = []
     for i in range(0, 7):
         if binary_lowirq[i] == "1":
@@ -80,10 +83,17 @@ def tag_irq(input_bytes): # TODO: Turn bitmasks into lists of supported IRQs, de
     irqlist.sort()
     return irqlist, binary_irqinfo
 
-def tag_dma(input_bytes):
-    pass
+def tag_configstart(input_bytes):
+    if ((len(input_bytes) == 0) or (input_bytes[0] == 1)):
+        return "acceptable"
+    elif input_bytes[0] == 0:
+        return "preferred"
+    elif input_bytes[0] == 2:
+        return "suboptimal"
+    else:
+        return "unknown (" + str(input_bytes[0]) + ")"
 
-def tag_dependent_function(input_bytes):
+def tag_dma(input_bytes):
     pass
 
 def tag_io(input_bytes):
@@ -116,8 +126,33 @@ if __name__ == "__main__":
                     tag_name = tag_types_short[tag]
                 else:
                     tag_name = "unknown"
-                print("Encountered short tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 # process tag here
+                if (tag_name == "irq"):
+                    irqlist, binary_irqinfo = tag_irq(rom_bytes[cursor:cursor+length])
+                    outstr = ""
+                    for irq in irqlist:
+                        outstr += str(irq) + " "
+                    outstr = outstr[:-1]
+                    if (binary_irqinfo != ""):
+                        print("IRQs: " + outstr + ", IRQ edge/level trigger mask: " + binary_irqinfo)
+                    else:
+                        print("IRQs: " + outstr)
+                elif (tag_name == "configstart"):
+                    config_type = tag_configstart(rom_bytes[cursor:cursor+length])
+                    print("Dependent function: Configuration type '" + config_type + "'")
+                elif (tag_name == "configend"):
+                    print("End dependent functions.")
+                elif (tag_name == "logicalid"):
+                    shortname = tag_id(rom_bytes[cursor:cursor+length])
+                    print("Logical ID: " + shortname)
+                elif (tag_name == "compatid"):
+                    shortname = tag_id(rom_bytes[cursor:cursor+length])
+                    print("Compatible ID: " + shortname)
+                elif (tag_name == "end"):
+                    print("End of PnP ROM, rest of data ignored.")
+                    break
+                else:
+                    print("Encountered unhandled short tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 cursor += length
             elif tag_type == 2:
                 if (tag <= (len(tag_types_long) - 1)):
@@ -125,12 +160,13 @@ if __name__ == "__main__":
                 else:
                     tag_name = "unknown"
                 length = int.from_bytes(rom_bytes[cursor:cursor+1], "little")
-                print("Encountered long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 # process tag here
                 if (tag_name == "ansistr"):
-                    print("ANSI String: " + tag_ansistr(rom_bytes[cursor+2:cursor+2+length+1]))
+                    print("ANSI String: " + tag_ansistr(rom_bytes[cursor+2:cursor+2+length]))
                 elif (tag_name == "unistr"):
-                    print("Unicode String: " + tag_unistr(rom_bytes[cursor+2:cursor+2+length+1]))
+                    print("Unicode String: " + tag_unistr(rom_bytes[cursor+2:cursor+2+length]))
+                else:
+                    print("Encountered unhandled long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 cursor += length+2
             else:
                 print("ERROR: Encountered unknown tag type.")
