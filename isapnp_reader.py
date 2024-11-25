@@ -94,10 +94,52 @@ def tag_configstart(input_bytes):
         return "unknown (" + str(input_bytes[0]) + ")"
 
 def tag_dma(input_bytes):
-    pass
+    binary_dma = format(input_bytes[0], "08b")
+    binary_dmaflags = format(input_bytes[1], "08b")
+    dmalist = []
+    for i in range(0, 7):
+        if binary_dma[i] == "1":
+            dmalist.append(7-i)
+    dmalist.sort()
+    if binary_dmaflags[0] != "0":
+        print("ERROR: Malformed DMA flags.")
+        return dmalist, "error", 0, 0, 0, "error"
+    else:
+        binary_speed = binary_dmaflags[1:3]
+        if binary_speed == "00":
+            speed = "compatibility"
+        elif binary_speed == "01":
+            speed = "typeA"
+        elif binary_speed == "10":
+            speed = "typeB"
+        else:
+            speed = "typeF"
+        count_by_word = bool(int(binary_dmaflags[3]))
+        count_by_byte = bool(int(binary_dmaflags[4]))
+        bus_master    = bool(int(binary_dmaflags[5]))
+        binary_type = binary_dmaflags[6:8]
+        if binary_type == "00":
+            type = "8-bit"
+        elif binary_type == "01":
+            type = "8-bit/16-bit"
+        elif binary_type == "10":
+            type = "16-bit"
+        else:
+            type = "reserved (invalid)"
+        return dmalist, speed, count_by_word, count_by_byte, bus_master, type
 
 def tag_io(input_bytes):
-    pass
+    binary_iotype = format(input_bytes[0], "08b")
+    min_address = format(int.from_bytes(input_bytes[1:3], "little"), "x")
+    max_address = format(int.from_bytes(input_bytes[3:5], "little"), "x")
+    alignment = int(input_bytes[5])
+    num_ports = int(input_bytes[6])
+    if int(binary_iotype[0:7]) != 0:
+        print("ERROR: Malformed I/O port definition.")
+        return -1, "0", "0", -1, -1
+    else:
+        return bool(int(binary_iotype[7])), min_address, max_address, alignment, num_ports
+
 
 def tag_fixed_io(input_bytes):
     pass
@@ -137,6 +179,32 @@ if __name__ == "__main__":
                         print("IRQs: " + outstr + ", IRQ edge/level trigger mask: " + binary_irqinfo)
                     else:
                         print("IRQs: " + outstr)
+                elif (tag_name == "dma"):
+                    dmalist, speed, count_by_word, count_by_byte, bus_master, type = tag_dma(rom_bytes[cursor:cursor+length])
+                    outstr = ""
+                    for dma in dmalist:
+                        outstr += str(dma) + " "
+                    outstr = outstr[:-1]
+                    if count_by_word == True:
+                        cbwstr = "Yes"
+                    else:
+                        cbwstr = "No"
+                    if count_by_byte == True:
+                        cbbstr = "Yes"
+                    else:
+                        cbbstr = "No"
+                    if bus_master == True:
+                        bmstr = "Yes"
+                    else:
+                        bmstr = "No"
+                    print("DMAs: " + outstr + ", Speed: " + speed + ", Count-by-Word: " + cbwstr + ", Count-by-Byte: " + cbbstr + ", Bus Mastering: " + bmstr + ", DMA Type: " + type)
+                elif (tag_name == "io"):
+                    iotype, min, max, alignment, portnum = tag_io(rom_bytes[cursor:cursor+length])
+                    if iotype == True:
+                        iotypestr = "16-bit decoding"
+                    else:
+                        iotypestr = "8-bit decoding"
+                    print("I/O (" + iotypestr + ") Port Min: 0x" + min + ", Max: 0x" + max + ", Alignment: " + str(alignment) + ", Ports Requested: " + str(portnum))
                 elif (tag_name == "configstart"):
                     config_type = tag_configstart(rom_bytes[cursor:cursor+length])
                     print("Dependent function: Configuration type '" + config_type + "'")
