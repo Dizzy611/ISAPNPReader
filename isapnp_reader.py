@@ -407,7 +407,7 @@ if __name__ == "__main__":
                     struct_print("Vendor Defined Tag (Long): " + hex + " (ASCII: " + ascii + ")")
                 else:
                     struct_print("Encountered unhandled long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
-                struct_format(rom_bytes[cursor-1:cursor+length], tag_name == "end")
+                struct_format(rom_bytes[cursor-1:cursor+2+length], tag_name == "end")
                 cursor += length+2
             else:
                 struct_print("ERROR: Encountered unknown tag type.")
