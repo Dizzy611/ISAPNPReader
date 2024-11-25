@@ -3,7 +3,13 @@ import sys
 
 tag_types_short = [ "unknown", "pnpver", "logicalid", "compatid", "irq", "dma", "configstart", "configend", "io", "fixedio", "reserved_a", "reserved_b", "reserved_c", "reserved_d", "vendorshort", "end" ]
 tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32memrange", "fix32memrange" ]
- 
+
+def bool_to_yesno(mybool):
+    if (mybool == True):
+        return "Yes"
+    else:
+        return "No"
+
 def format_id(vid):
     binary = ''.join(format(byte, '08b') for byte in vid)
     if int(binary[0]) != 0:
@@ -157,7 +163,30 @@ def tag_vendor(input_bytes):
         ascii_vendor = "Invalid ASCII"
     return hex_vendor, ascii_vendor
 
-
+def tag_memrange(input_bytes):
+    binary_meminfo = format(input_bytes[0], "08b")
+    min_address = format(int.from_bytes(input_bytes[1:3], "little"), "x")
+    max_address = format(int.from_bytes(input_bytes[3:5], "little"), "x")
+    alignment = format(int.from_bytes(input_bytes[5:7], "little"), "x")
+    length = format(int.from_bytes(input_bytes[7:9], "little"), "x")
+    if binary_meminfo[0] != "0":
+        print("ERROR: Malformed memory range definition")
+        return False, False, "error", False, False, False, min_address, max_address, alignment, length
+    else:
+        expansion_rom = bool(int(binary_meminfo[1]))
+        shadowable = bool(int(binary_meminfo[2]))
+        if (binary_meminfo[3:5] == "00"):
+            bitsize = "8-bit"
+        elif (binary_meminfo[3:5] == "01"):
+            bitsize = "16-bit"
+        elif (binary_meminfo[3:5] == "10"):
+            bitsize = "8-bit/16-bit"
+        else:
+            bitsize = "reserved (invalid)"
+        high_or_range = bool(int(binary_meminfo[5]))
+        cacheable = bool(int(binary_meminfo[6]))
+        writeable = bool(int(binary_meminfo[7]))
+        return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
@@ -203,18 +232,9 @@ if __name__ == "__main__":
                     for dma in dmalist:
                         outstr += str(dma) + " "
                     outstr = outstr[:-1]
-                    if count_by_word == True:
-                        cbwstr = "Yes"
-                    else:
-                        cbwstr = "No"
-                    if count_by_byte == True:
-                        cbbstr = "Yes"
-                    else:
-                        cbbstr = "No"
-                    if bus_master == True:
-                        bmstr = "Yes"
-                    else:
-                        bmstr = "No"
+                    cbwstr = bool_to_yesno(count_by_word)
+                    cbbstr = bool_to_yesno(count_by_byte)
+                    bmstr  = bool_to_yesno(bus_master)
                     print("DMAs: " + outstr + ", Speed: " + speed + ", Count-by-Word: " + cbwstr + ", Count-by-Byte: " + cbbstr + ", Bus Mastering: " + bmstr + ", DMA Type: " + type)
                 elif (tag_name == "io"):
                     iotype, min, max, alignment, portnum = tag_io(rom_bytes[cursor:cursor+length])
@@ -239,7 +259,7 @@ if __name__ == "__main__":
                     print("Compatible ID: " + shortname)
                 elif (tag_name == "vendorshort"):
                     hex, ascii = tag_vendor(rom_bytes[cursor:cursor+length])
-                    print("Vendor Defined Tag: " + hex + " (ASCII: " + ascii + ")")
+                    print("Vendor Defined Tag (Short): " + hex + " (ASCII: " + ascii + ")")
                 elif (tag_name == "end"):
                     print("End of PnP ROM, rest of data ignored.")
                     break
@@ -257,6 +277,18 @@ if __name__ == "__main__":
                     print("ANSI String: " + tag_ansistr(rom_bytes[cursor+2:cursor+2+length]))
                 elif (tag_name == "unistr"):
                     print("Unicode String: " + tag_unistr(rom_bytes[cursor+2:cursor+2+length]))
+                elif (tag_name == "memrange"):
+                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength = tag_memrange(rom_bytes[cursor+2:cursor+2+length])
+                    expromstr = bool_to_yesno(expansion_rom)
+                    shadowstr = bool_to_yesno(shadowable)
+                    horstr    = "high address" if high_or_range else "range length"
+                    cachestr  = bool_to_yesno(cacheable)
+                    writestr  = bool_to_yesno(writeable)
+                    print("Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
+                          "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
+                elif (tag_name == "vendorlong"):
+                    hex, ascii = tag_vendor(rom_bytes[cursor+2:cursor+2+length])
+                    print("Vendor Defined Tag (Long): " + hex + " (ASCII: " + ascii + ")"
                 else:
                     print("Encountered unhandled long tag ID " + str(tag) + " (" + tag_name + ") of length " + str(length) + ".")
                 cursor += length+2
