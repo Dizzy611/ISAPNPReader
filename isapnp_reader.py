@@ -365,9 +365,9 @@ if __name__ == "__main__":
                     struct_print("Vendor Defined Tag (Short): " + hex + " (ASCII: " + ascii + ")")
                 elif (tag_name == "end"):
                     checksum = 0
-                    for i in range(9, len(rom_bytes)-1):
-                        checksum = (checksum + rom_bytes[i]) % 256
-                    checksum = 256 - checksum
+                    for i in range(9, cursor):
+                        checksum = (checksum + rom_bytes[i]) & 255
+                    checksum = (256 - checksum) & 255
                     if checksum == int(rom_bytes[cursor]):
                         struct_print("End of PnP ROM. Checksum matches: Calculated [" + str(checksum) + "], Provided [" + str(int(rom_bytes[cursor])) + "]")
                     else:
