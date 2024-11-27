@@ -17,6 +17,17 @@ def read_devids():
             devid_dict[devid.split(':')[0].upper()] = devid.split(':')[1].strip()
     return devid_dict
 
+def read_venids():
+    if not os.path.exists("./venids.dat"):
+        venid_dict = {}
+    else:
+        with open("venids.dat", "r") as venid_file:
+            venids = venid_file.readlines()
+        venid_dict = {}
+        for venid in venids:
+            venid_dict[venid.split(':')[0].upper()] = venid.split(':')[1].strip()
+    return venid_dict
+
 def bool_to_yesno(mybool):
     if (mybool == True):
         return "Yes"
@@ -274,6 +285,7 @@ if __name__ == "__main__":
         struct_print("ERROR: Must specify a ROM on the command line.")
     else:
         devids = read_devids()
+        venids = read_venids()
         if not os.path.exists(sys.argv[1]):
             struct_print("ERROR: " + sys.argv[1] + " not found.")
             sys.exit(1)
@@ -292,6 +304,8 @@ if __name__ == "__main__":
         else:
             print("static const uint8_t pnp_rom[] = {")
         struct_print("Short name: " + shortname + ", Vendor ID: " + vendorname + ", Product ID: " + productnum + ", Revision: " + revisionnum + ", Serial Number: " + str(int.from_bytes(serial, "little")) + ", Checksum: " + str(checksum))
+        if vendorname in venids:
+            struct_print("Vendor ID matches " + venids[vendorname])
         struct_format(rom_bytes[0:9])
         cursor = 9
         while (cursor <= len(rom_bytes)):
