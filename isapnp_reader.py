@@ -275,14 +275,14 @@ if __name__ == "__main__":
     else:
         devids = read_devids()
         if not os.path.exists(sys.argv[1]):
-		struct_print("ERROR: " + sys.argv[1] + " not found.")
-		sys.exit(1)
+            struct_print("ERROR: " + sys.argv[1] + " not found.")
+            sys.exit(1)
         try:
-		with open(sys.argv[1], "rb") as rom_file:
-            		rom_bytes = rom_file.read()
-	except Exception as e:
-		struct_print("ERROR: Unable to read " + sys.argv[1] + ": " + str(e))
-		sys.exit(1)
+            with open(sys.argv[1], "rb") as rom_file:
+                rom_bytes = rom_file.read()
+        except Exception as e:
+            struct_print("ERROR: Unable to read " + sys.argv[1] + ": " + str(e))
+            sys.exit(1)
         header = rom_bytes[0:9]
         shortname, vendorname, productnum, revisionnum, _ = format_id(header[0:4])
         serial = header[4:8]
@@ -364,7 +364,14 @@ if __name__ == "__main__":
                     hex, ascii = tag_vendor(rom_bytes[cursor:cursor+length])
                     struct_print("Vendor Defined Tag (Short): " + hex + " (ASCII: " + ascii + ")")
                 elif (tag_name == "end"):
-                    struct_print("End of PnP ROM.")
+                    checksum = 0
+                    for i in range(9, len(rom_bytes)-1):
+                        checksum = (checksum + rom_bytes[i]) % 256
+                    checksum = 256 - checksum
+                    if checksum == int(rom_bytes[cursor]):
+                        struct_print("End of PnP ROM. Checksum matches: Calculated [" + str(checksum) + "], Provided [" + str(int(rom_bytes[cursor])) + "]")
+                    else:
+                        struct_print("End of PnP ROM. Checksum does not match: Calculated [" + str(checksum) + "], Provided [" + str(int(rom_bytes[cursor])) + "]")
                     struct_format(rom_bytes[cursor-1:cursor+length], tag_name == "end")
                     break
                 else:
