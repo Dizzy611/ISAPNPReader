@@ -274,8 +274,15 @@ if __name__ == "__main__":
         struct_print("ERROR: Must specify a ROM on the command line.")
     else:
         devids = read_devids()
-        with open(sys.argv[1], "rb") as rom_file:
-            rom_bytes = rom_file.read()
+        if not os.path.exists(sys.argv[1]):
+		struct_print("ERROR: " + sys.argv[1] + " not found.")
+		sys.exit(1)
+        try:
+		with open(sys.argv[1], "rb") as rom_file:
+            		rom_bytes = rom_file.read()
+	except Exception as e:
+		struct_print("ERROR: Unable to read " + sys.argv[1] + ": " + str(e))
+		sys.exit(1)
         header = rom_bytes[0:9]
         shortname, vendorname, productnum, revisionnum, _ = format_id(header[0:4])
         serial = header[4:8]
