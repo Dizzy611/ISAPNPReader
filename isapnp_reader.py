@@ -296,7 +296,11 @@ if __name__ == "__main__":
             struct_print("ERROR: Unable to read " + sys.argv[1] + ": " + str(e))
             sys.exit(1)
         header = rom_bytes[0:9]
-        shortname, vendorname, productnum, revisionnum, _ = format_id(header[0:4])
+        try:
+            shortname, vendorname, productnum, revisionnum, _ = format_id(header[0:4])
+        except:
+            print("Invalid header encountered. Malformed ROM? Exiting.")
+            sys.exit(1)
         serial = header[4:8]
         checksum = header[8]
         if not struct_mode:
