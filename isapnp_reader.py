@@ -7,7 +7,7 @@ tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32
 struct_mode = False
 
 def read_devids():
-    if not os.path.exists("./devids.dat"):
+    if not os.path.isfile("./devids.dat"):
         devid_dict = {}
     else:
         with open("devids.dat", "r") as devid_file:
@@ -18,7 +18,7 @@ def read_devids():
     return devid_dict
 
 def read_venids():
-    if not os.path.exists("./venids.dat"):
+    if not os.path.isfile("./venids.dat"):
         venid_dict = {}
     else:
         with open("venids.dat", "r") as venid_file:
@@ -286,8 +286,8 @@ if __name__ == "__main__":
     else:
         devids = read_devids()
         venids = read_venids()
-        if not os.path.exists(sys.argv[1]):
-            struct_print("ERROR: " + sys.argv[1] + " not found.")
+        if not os.path.isfile(sys.argv[1]):
+            struct_print("ERROR: " + sys.argv[1] + " not found or not a file.")
             sys.exit(1)
         try:
             with open(sys.argv[1], "rb") as rom_file:
