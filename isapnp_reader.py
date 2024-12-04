@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 import sys
 import os
-import platformdirs
+try:
+    import platformdirs
+    nopd = False
+except ImportError:
+    nopd = True
 
 tag_types_short = [ "unknown", "pnpver", "logicalid", "compatid", "irq", "dma", "configstart", "configend", "io", "fixedio", "reserved_a", "reserved_b", "reserved_c", "reserved_d", "vendorshort", "end" ]
 tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32memrange", "fix32memrange" ]
@@ -20,9 +24,10 @@ def find_file(filename):
     testpath = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), filename)
     if os.path.isfile(testpath):
         return testpath
-    testpath = os.path.join(platformdirs.user_data_dir("isapnpreader", "dizzy611"), filename)
-    if os.path.isfile(testpath):
-        return testpath
+    if nopd == False:
+        testpath = os.path.join(platformdirs.user_data_dir("isapnpreader", "dizzy611"), filename)
+        if os.path.isfile(testpath):
+            return testpath
     return ""
 
 def read_devids():
