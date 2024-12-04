@@ -113,11 +113,11 @@ def read_tag(tagbyte):
     return tag_type, tag, length
 
 def tag_ansistr(input_bytes):
-    return input_bytes.decode('ascii')
+    return input_bytes.decode("ascii")
 
 def tag_unistr(input_bytes):
     # IS this utf-8? It just says "unicode" and I can't find a single example explaining what kind of unicode or for that matter ever showing a device using it.
-    return input_bytes.decode('utf-8')
+    return input_bytes.decode("utf-8")
 
 def tag_pnp_version(input_bytes):
     bcd = format(input_bytes[0], "x")      # Read byte as an integer, convert to hexadecimal
