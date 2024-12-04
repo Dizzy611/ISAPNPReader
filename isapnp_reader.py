@@ -7,8 +7,33 @@ try:
 except ImportError:
     nopd = True
 
-tag_types_short = [ "unknown", "pnpver", "logicalid", "compatid", "irq", "dma", "configstart", "configend", "io", "fixedio", "reserved_a", "reserved_b", "reserved_c", "reserved_d", "vendorshort", "end" ]
-tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32memrange", "fix32memrange" ]
+tag_types_short = [
+    "unknown",
+    "pnpver",
+    "logicalid",
+    "compatid",
+    "irq",
+    "dma",
+    "configstart",
+    "configend",
+    "io",
+    "fixedio",
+    "reserved_a",
+    "reserved_b",
+    "reserved_c",
+    "reserved_d",
+    "vendorshort",
+    "end",
+]
+tag_types_long = [
+    "unknown",
+    "memrange",
+    "ansistr",
+    "unistr",
+    "vendorlong",
+    "32memrange",
+    "fix32memrange",
+]
 struct_mode = False
 
 def find_file(filename):
