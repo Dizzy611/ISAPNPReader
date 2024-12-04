@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import sys
 import os
+import sys
 try:
     import platformdirs
     nopd = False
@@ -181,7 +181,7 @@ def tag_irq(input_bytes):
         irqinfo_specified = True
     else:
         binary_irqinfo = ""
-        level_low, level_high, edge_low, edge_high = False, False, False, True # Default if not specified is edge-triggered high per ISA spec
+        level_low, level_high, edge_low, edge_high = (False, False, False, True) # Default if not specified is edge-triggered high per ISA spec
         irqinfo_specified = False
     irqlist = []
     for i in range(0, 7):
@@ -248,7 +248,7 @@ def tag_io(input_bytes):
         struct_print("ERROR: Malformed I/O port definition.")
         return -1, "0", "0", -1, -1
     else:
-        return bool(int(binary_iotype[7])), min_address, max_address, alignment, num_ports
+        return (bool(int(binary_iotype[7])), min_address, max_address, alignment, num_ports)
 
 def tag_fixed_io(input_bytes):
     address = format(int.from_bytes(input_bytes[0:2], "little"), "x")
@@ -291,8 +291,8 @@ def tag_memrange(input_bytes):
     max_address = format(int.from_bytes(input_bytes[3:5], "little"), "x")
     alignment = format(int.from_bytes(input_bytes[5:7], "little"), "x")
     length = format(int.from_bytes(input_bytes[7:9], "little"), "x")
-    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, False)
-    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
+    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable) = parse_meminfo(binary_meminfo, False)
+    return (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length)
 
 def tag_32memrange(input_bytes):
     binary_meminfo = format(input_bytes[0], "08b")
@@ -300,15 +300,15 @@ def tag_32memrange(input_bytes):
     max_address = format(int.from_bytes(input_bytes[5:9], "little"), "x")
     alignment = format(int.from_bytes(input_bytes[9:13], "little"), "x")
     length = format(int.from_bytes(input_bytes[13:17], "little"), "x")
-    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, True)
-    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length
+    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable) = parse_meminfo(binary_meminfo, True)
+    return (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, length)
 
 def tag_fix32memrange(input_bytes):
     binary_meminfo = format(input_bytes[0], "08b")
     address = format(int.from_bytes(input_bytes[1:5], "little"), "x")
     length = format(int.from_bytes(input_bytes[5:9], "little"), "x")
-    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable = parse_meminfo(binary_meminfo, True)
-    return expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, length
+    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable) = parse_meminfo(binary_meminfo, True)
+    return (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, length)
 
 def struct_print(string):
     if struct_mode:
@@ -379,7 +379,7 @@ if __name__ == "__main__":
                     else:
                         struct_print("PnP Version: " + version + ", vendor-specific version 0x" + venspec)
                 elif (tag_name == "irq"):
-                    irqlist, level_low, level_high, edge_low, edge_high, irqinfo_specified = tag_irq(rom_bytes[cursor : cursor + length])
+                    (irqlist, level_low, level_high, edge_low, edge_high, irqinfo_specified) = tag_irq(rom_bytes[cursor : cursor + length])
                     outstr = ""
                     for irq in irqlist:
                         outstr += str(irq) + " "
@@ -395,7 +395,7 @@ if __name__ == "__main__":
                     else:
                         struct_print("IRQs: " + outstr + ", IRQ triggers (Inferred from ISA spec): " + irqinfostr)
                 elif (tag_name == "dma"):
-                    dmalist, speed, count_by_word, count_by_byte, bus_master, type = tag_dma(rom_bytes[cursor : cursor + length])
+                    (dmalist, speed, count_by_word, count_by_byte, bus_master, type) = tag_dma(rom_bytes[cursor : cursor + length])
                     outstr = ""
                     for dma in dmalist:
                         outstr += str(dma) + " "
@@ -459,7 +459,7 @@ if __name__ == "__main__":
                 elif (tag_name == "unistr"):
                     struct_print("Unicode String: " + tag_unistr(rom_bytes[cursor + 2 : cursor + 2 + length]))
                 elif (tag_name == "memrange"):
-                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength = tag_memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
+                    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength) = tag_memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
                     horstr    = "high address" if high_or_range else "range length"
@@ -468,7 +468,7 @@ if __name__ == "__main__":
                     struct_print("Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
                 elif (tag_name == "32memrange"):
-                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength = tag_32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
+                    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength) = tag_32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
                     horstr    = "high address" if high_or_range else "range length"
@@ -477,7 +477,7 @@ if __name__ == "__main__":
                     struct_print("32-Bit Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
                 elif (tag_name == "fix32memrange"):
-                    expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, memlength = tag_fix32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
+                    (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, memlength) = tag_fix32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
                     horstr    = "high address" if high_or_range else "range length"
