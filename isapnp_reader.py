@@ -61,7 +61,7 @@ def find_file(filename):
 
 def read_devids():
     devidpath = find_file("devids.dat")
-    if (devidpath == ""):
+    if devidpath == "":
         devid_dict = {}
     else:
         with open(devidpath, "r") as devid_file:
@@ -73,7 +73,7 @@ def read_devids():
 
 def read_venids():
     venidpath = find_file("venids.dat")
-    if (venidpath == ""):
+    if venidpath == "":
         venid_dict = {}
     else:
         with open(venidpath, "r") as venid_file:
@@ -84,13 +84,13 @@ def read_venids():
     return venid_dict
 
 def bool_to_yesno(mybool):
-    if (mybool == True):
+    if mybool == True:
         return "Yes"
     else:
         return "No"
 
 def format_id(vid):
-    binary = ''.join(format(byte, '08b') for byte in vid)
+    binary = "".join(format(byte, "08b") for byte in vid)
     if int(binary[0]) != 0:
         struct_print("ERROR: Invalid ID")
         return None
@@ -116,7 +116,7 @@ def format_id(vid):
     revisionnum += format(int(binary[28:32], 2), "x")
 
     # Required-for-boot flag
-    if (len(binary) > 32): # we have final bytes for the boot flag and optional commands. We don't parse the optional commands, but the boot flag may be important
+    if len(binary) > 32: # we have final bytes for the boot flag and optional commands. We don't parse the optional commands, but the boot flag may be important
         boot_participating = bool(int(binary[39]))
     else:
         boot_participating = False
@@ -274,13 +274,13 @@ def parse_meminfo(binary_meminfo, is_32bit):
     else:
         expansion_rom = bool(int(binary_meminfo[1]))
         shadowable = bool(int(binary_meminfo[2]))
-        if (binary_meminfo[3:5] == "00"):
+        if binary_meminfo[3:5] == "00":
             bitsize = "8-bit"
-        elif (binary_meminfo[3:5] == "01"):
+        elif binary_meminfo[3:5] == "01":
             bitsize = "16-bit"
-        elif (binary_meminfo[3:5] == "10"):
+        elif binary_meminfo[3:5] == "10":
             bitsize = "8-bit/16-bit"
-        elif (is_32bit):
+        elif is_32bit:
             bitsize = "32-bit"
         else:
             bitsize = "reserved (invalid)"
@@ -367,22 +367,22 @@ if __name__ == "__main__":
             struct_print("Vendor ID matches " + venids[vendorname])
         struct_format(rom_bytes[0:9])
         cursor = 9
-        while (cursor <= len(rom_bytes)):
+        while cursor <= len(rom_bytes):
             tag_type, tag, length = read_tag(rom_bytes[cursor])
             cursor += 1
             if tag_type == 1:
-                if (tag <= (len(tag_types_short) - 1)):
+                if tag <= (len(tag_types_short) - 1):
                     tag_name = tag_types_short[tag]
                 else:
                     tag_name = "unknown"
                 # process tag here
-                if (tag_name == "pnpver"):
+                if tag_name == "pnpver":
                     version, venspec = tag_pnp_version(rom_bytes[cursor : cursor + length])
                     if venspec == "none":
                         struct_print("PnP Version: " + version)
                     else:
                         struct_print("PnP Version: " + version + ", vendor-specific version 0x" + venspec)
-                elif (tag_name == "irq"):
+                elif tag_name == "irq":
                     (irqlist, level_low, level_high, edge_low, edge_high, irqinfo_specified) = tag_irq(rom_bytes[cursor : cursor + length])
                     outstr = ""
                     for irq in irqlist:
@@ -394,11 +394,11 @@ if __name__ == "__main__":
                     irqinfostr += "edge triggered (low), " if edge_low else ""
                     irqinfostr += "edge triggered (high), " if edge_high else ""
                     irqinfostr = irqinfostr[:-2]
-                    if (irqinfo_specified == True):
+                    if irqinfo_specified == True:
                         struct_print("IRQs: " + outstr + ", IRQ triggers (Specified in tag): " + irqinfostr)
                     else:
                         struct_print("IRQs: " + outstr + ", IRQ triggers (Inferred from ISA spec): " + irqinfostr)
-                elif (tag_name == "dma"):
+                elif tag_name == "dma":
                     (dmalist, speed, count_by_word, count_by_byte, bus_master, type) = tag_dma(rom_bytes[cursor : cursor + length])
                     outstr = ""
                     for dma in dmalist:
@@ -408,35 +408,35 @@ if __name__ == "__main__":
                     cbbstr = bool_to_yesno(count_by_byte)
                     bmstr  = bool_to_yesno(bus_master)
                     struct_print("DMAs: " + outstr + ", Speed: " + speed + ", Count-by-Word: " + cbwstr + ", Count-by-Byte: " + cbbstr + ", Bus Mastering: " + bmstr + ", DMA Type: " + type)
-                elif (tag_name == "io"):
+                elif tag_name == "io":
                     iotype, min, max, alignment, portnum = tag_io(rom_bytes[cursor : cursor + length])
                     if iotype == True:
                         iotypestr = "16-bit decoding"
                     else:
                         iotypestr = "10-bit decoding"
                     struct_print("I/O (" + iotypestr + ") Port Min: 0x" + min + ", Max: 0x" + max + ", Alignment: " + str(alignment) + ", Ports Requested: " + str(portnum))
-                elif (tag_name == "fixedio"):
+                elif tag_name == "fixedio":
                     address, portnum = tag_fixed_io(rom_bytes[cursor : cursor + length])
                     struct_print("Fixed I/O Port: 0x" + address + ", Ports Requested: " + str(portnum))
-                elif (tag_name == "configstart"):
+                elif tag_name == "configstart":
                     config_type = tag_configstart(rom_bytes[cursor : cursor + length])
                     struct_print("Dependent function: Configuration type '" + config_type + "'")
-                elif (tag_name == "configend"):
+                elif tag_name == "configend":
                     struct_print("End dependent functions.")
-                elif (tag_name == "logicalid"):
+                elif tag_name == "logicalid":
                     shortname, boot_participating = tag_logical(rom_bytes[cursor : cursor + length])
                     struct_print("Logical ID: " + shortname + ", Participates in boot: " + bool_to_yesno(boot_participating))
                     if shortname.upper() in devids:
                         struct_print("Logical ID maps to " + devids[shortname.upper()])
-                elif (tag_name == "compatid"):
+                elif tag_name == "compatid":
                     shortname = tag_id(rom_bytes[cursor : cursor + length])
                     struct_print("Compatible ID: " + shortname)
                     if shortname.upper() in devids:
                         struct_print("Compatible ID maps to " + devids[shortname.upper()])
-                elif (tag_name == "vendorshort"):
+                elif tag_name == "vendorshort":
                     hex, ascii = tag_vendor(rom_bytes[cursor : cursor + length])
                     struct_print("Vendor Defined Tag (Short): " + hex + " (ASCII: " + ascii + ")")
-                elif (tag_name == "end"):
+                elif tag_name == "end":
                     checksum = 0
                     for i in range(9, cursor):
                         checksum = (checksum + rom_bytes[i]) & 255
@@ -452,17 +452,17 @@ if __name__ == "__main__":
                 struct_format(rom_bytes[cursor - 1 : cursor + length], tag_name == "end")
                 cursor += length
             elif tag_type == 2:
-                if (tag <= (len(tag_types_long) - 1)):
+                if tag <= (len(tag_types_long) - 1):
                     tag_name = tag_types_long[tag]
                 else:
                     tag_name = "unknown"
                 length = int.from_bytes(rom_bytes[cursor : cursor + 1], "little")
                 # process tag here
-                if (tag_name == "ansistr"):
+                if tag_name == "ansistr":
                     struct_print("ANSI String: " + tag_ansistr(rom_bytes[cursor + 2 : cursor + 2 + length]))
-                elif (tag_name == "unistr"):
+                elif tag_name == "unistr":
                     struct_print("Unicode String: " + tag_unistr(rom_bytes[cursor + 2 : cursor + 2 + length]))
-                elif (tag_name == "memrange"):
+                elif tag_name == "memrange":
                     (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength) = tag_memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
@@ -471,7 +471,7 @@ if __name__ == "__main__":
                     writestr  = bool_to_yesno(writeable)
                     struct_print("Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
-                elif (tag_name == "32memrange"):
+                elif tag_name == "32memrange":
                     (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, min_address, max_address, alignment, memlength) = tag_32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
@@ -480,7 +480,7 @@ if __name__ == "__main__":
                     writestr  = bool_to_yesno(writeable)
                     struct_print("32-Bit Memory Range: Min Address: 0x" + min_address + ", Max Address: 0x" + max_address + ", Alignment: 0x" + alignment + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
-                elif (tag_name == "fix32memrange"):
+                elif tag_name == "fix32memrange":
                     (expansion_rom, shadowable, bitsize, high_or_range, cacheable, writeable, address, memlength) = tag_fix32memrange(rom_bytes[cursor + 2 : cursor + 2 + length])
                     expromstr = bool_to_yesno(expansion_rom)
                     shadowstr = bool_to_yesno(shadowable)
@@ -489,7 +489,7 @@ if __name__ == "__main__":
                     writestr  = bool_to_yesno(writeable)
                     struct_print("Fixed 32-Bit Memory Range: Address: 0x" + address + ", Length: 0x" + memlength +
                           "\n\tExpansion ROM: " + expromstr + ", Shadowable: " + shadowstr + ", Bit Size: " + bitsize + ", Decode Supports: " + horstr + ", Cacheable: " + cachestr + ", Writeable: " + writestr)
-                elif (tag_name == "vendorlong"):
+                elif tag_name == "vendorlong":
                     hex, ascii = tag_vendor(rom_bytes[cursor + 2 : cursor + 2 + length])
                     struct_print("Vendor Defined Tag (Long): " + hex + " (ASCII: " + ascii + ")")
                 else:
