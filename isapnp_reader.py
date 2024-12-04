@@ -176,7 +176,7 @@ def tag_dma(input_bytes):
         count_by_word = bool(int(binary_dmaflags[3]))
         count_by_byte = bool(int(binary_dmaflags[4]))
         bus_master    = bool(int(binary_dmaflags[5]))
-        binary_type = binary_dmaflags[6:8]
+        binary_type   = binary_dmaflags[6:8]
         if binary_type == "00":
             type = "8-bit"
         elif binary_type == "01":
@@ -207,7 +207,7 @@ def tag_fixed_io(input_bytes):
 def tag_vendor(input_bytes):
     hex_vendor = format(int.from_bytes(input_bytes, "little"), "x")
     try:
-    	ascii_vendor = input_bytes.decode("ascii")
+        ascii_vendor = input_bytes.decode("ascii")
     except:
         ascii_vendor = "Invalid ASCII"
     return hex_vendor, ascii_vendor
@@ -445,4 +445,3 @@ if __name__ == "__main__":
                 struct_print("ERROR: Encountered unknown tag type.")
         if struct_mode:
             print("};")
-
