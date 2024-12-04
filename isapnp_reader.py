@@ -68,7 +68,7 @@ def read_devids():
             devids = devid_file.readlines()
         devid_dict = {}
         for devid in devids:
-            devid_dict[devid.split(':')[0].upper()] = devid.split(':')[1].strip()
+            devid_dict[devid.split(":")[0].upper()] = devid.split(":")[1].strip()
     return devid_dict
 
 def read_venids():
@@ -80,7 +80,7 @@ def read_venids():
             venids = venid_file.readlines()
         venid_dict = {}
         for venid in venids:
-            venid_dict[venid.split(':')[0].upper()] = venid.split(':')[1].strip()
+            venid_dict[venid.split(":")[0].upper()] = venid.split(":")[1].strip()
     return venid_dict
 
 def bool_to_yesno(mybool):
