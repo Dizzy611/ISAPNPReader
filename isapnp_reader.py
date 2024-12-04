@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+struct_mode = False
+
 import os
 import sys
 try:
@@ -6,6 +8,8 @@ try:
     nopd = False
 except ImportError:
     nopd = True
+    if not struct_mode:
+        print("WARNING: 'platformdirs' python module not available. Platform-specific data directories will not be used for data files.")
 
 tag_types_short = [
     "unknown",
@@ -34,7 +38,6 @@ tag_types_long = [
     "32memrange",
     "fix32memrange",
 ]
-struct_mode = False
 
 def find_file(filename):
     testpath = os.path.join(".", filename)
