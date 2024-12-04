@@ -3,6 +3,7 @@ struct_mode = False
 
 import os
 import sys
+
 try:
     import platformdirs
     nopd = False
@@ -47,7 +48,7 @@ def find_file(filename):
         testpath = os.path.join(os.path.abspath(__file__), filename)
         if os.path.isfile(testpath):
             return testpath
-    except NameError: #__file__ does not exist, try something else.
+    except NameError: # __file__ does not exist, try something else.
         pass
     testpath = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), filename)
     if os.path.isfile(testpath):
