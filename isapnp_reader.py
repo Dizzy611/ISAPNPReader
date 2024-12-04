@@ -1,16 +1,36 @@
 #!/usr/bin/env python
 import sys
 import os
+import platformdirs
 
 tag_types_short = [ "unknown", "pnpver", "logicalid", "compatid", "irq", "dma", "configstart", "configend", "io", "fixedio", "reserved_a", "reserved_b", "reserved_c", "reserved_d", "vendorshort", "end" ]
 tag_types_long = [ "unknown", "memrange", "ansistr", "unistr", "vendorlong", "32memrange", "fix32memrange" ]
 struct_mode = False
 
+def find_file(filename):
+    testpath = os.path.join(".", filename)
+    if os.path.isfile(testpath):
+        return testpath
+    try:
+        testpath = os.path.join(os.path.abspath(__file__), filename)
+        if os.path.isfile(testpath):
+            return testpath
+    except NameError: #__file__ does not exist, try something else.
+        pass
+    testpath = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), filename)
+    if os.path.isfile(testpath):
+        return testpath
+    testpath = os.path.join(platformdirs.user_data_dir("isapnpreader", "dizzy611"), filename)
+    if os.path.isfile(testpath):
+        return testpath
+    return ""
+
 def read_devids():
-    if not os.path.isfile("./devids.dat"):
+    devidpath = find_file("devids.dat")
+    if (devidpath == ""):
         devid_dict = {}
     else:
-        with open("devids.dat", "r") as devid_file:
+        with open(devidpath, "r") as devid_file:
             devids = devid_file.readlines()
         devid_dict = {}
         for devid in devids:
@@ -18,10 +38,11 @@ def read_devids():
     return devid_dict
 
 def read_venids():
-    if not os.path.isfile("./venids.dat"):
+    venidpath = find_file("venids.dat")
+    if (venidpath == ""):
         venid_dict = {}
     else:
-        with open("venids.dat", "r") as venid_file:
+        with open(venidpath, "r") as venid_file:
             venids = venid_file.readlines()
         venid_dict = {}
         for venid in venids:
